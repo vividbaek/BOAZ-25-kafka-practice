@@ -14,6 +14,10 @@ main_topic = 'event-stream'
 dlq_topic = 'event-stream-dlq'
 consumer_group_id = 'event-consumer-group'
 
+
+# 💡 미션 수행을 위해 컨슈머 내부에 프로듀서를 만들어야 합니다.
+# producer = KafkaProducer(...)
+
 # 카프카 컨슈머 설정
 consumer = KafkaConsumer(
     main_topic,
@@ -24,9 +28,6 @@ consumer = KafkaConsumer(
     enable_auto_commit=True, 
     value_deserializer=lambda m: m.decode('utf-8')
 )
-
-# 💡 미션 수행을 위해 컨슈머 내부에 프로듀서를 만들어야 합니다.
-# producer = KafkaProducer(...)
 
 print(f"컨슈머 시작. '{main_topic}' 토픽의 메시지를 수신합니다.")
 
@@ -48,7 +49,7 @@ for message in consumer:
         print(f"❌ 처리 실패 (JSON 파싱 불가): {e}")
 
         # 💡 미션: 파싱에 실패한 메시지를 DLQ 토픽으로 보내세요.
-        # producer.send(dlq_topic, value=message.value.encode('utf-8'))
+        # producer.send(dlq_topic, value=message.value)
         
         # 💡 미션: DLQ로 보낸 후에도 오프셋은 커밋해서 넘어가야 합니다.
         # consumer.commit()
