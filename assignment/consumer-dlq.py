@@ -16,7 +16,11 @@ consumer_group_id = 'event-consumer-group'
 
 
 # 💡 미션 수행을 위해 컨슈머 내부에 프로듀서를 만들어야 합니다.
-# producer = KafkaProducer(...)
+# 카프카는 바이트 배열을 전송하므로, utf-8 인코딩을 해야 합니다. (utf-8 인코딩을 해야 카프카가 바이트 배열을 전송할 수 있음)
+producer = KafkaProducer(
+    bootstrap_servers='localhost:9092',
+    #(...코드 1줄 추가...)
+)
 
 # 카프카 컨슈머 설정
 consumer = KafkaConsumer(
@@ -24,8 +28,7 @@ consumer = KafkaConsumer(
     bootstrap_servers='localhost:9092',
     group_id=consumer_group_id,
     auto_offset_reset='earliest',
-    # 😱 미션 수행을 위해 'enable_auto_commit'을 False로 바꿔야 합니다.
-    enable_auto_commit=True, 
+    enable_auto_commit=False, 
     value_deserializer=lambda m: m.decode('utf-8')
 )
 
@@ -49,7 +52,15 @@ for message in consumer:
         print(f"❌ 처리 실패 (JSON 파싱 불가): {e}")
 
         # 💡 미션: 파싱에 실패한 메시지를 DLQ 토픽으로 보내세요.
-        # producer.send(dlq_topic, value=message.value)
+        # producer.send(dlq_topic, value=message.value) #producer 코드 수정후 주석해제
         
-        # 💡 미션: DLQ로 보낸 후에도 오프셋은 커밋해서 넘어가야 합니다.
-        # consumer.commit()
+        # DLQ로 보낸 후에도 오프셋은 커밋해서 넘어가야 합니다.
+        consumer.commit()
+
+    except KeyboardInterrupt:
+        print("\n컨슈머 종료.")
+
+    finally:
+        # 6. 종료 시 컨슈머와 프로듀서를 모두 안전하게 닫습니다.
+        consumer.close()
+        # producer.close() #producer 코드 수정후 주석해제
