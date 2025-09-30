@@ -15,8 +15,9 @@ consumer_group_id = 'event-consumer-group'
 
 # 1. DLQ로 메시지를 보낼 프로듀서를 미리 생성합니다.
 producer = KafkaProducer(
-    bootstrap_servers='localhost:9_092',
+    bootstrap_servers='localhost:9092',
     # DLQ로는 원본 메시지(문자열)를 그대로 보내므로, utf-8 인코딩만 수행합니다.
+    # 카프카는 바이트 배열을 전송하므로, utf-8 인코딩을 해야 합니다. (utf-8 인코딩을 해야 카프카가 바이트 배열을 전송할 수 있음)
     value_serializer=lambda v: v.encode('utf-8')
 )
 
@@ -46,7 +47,7 @@ try:
             # 4. 파싱 실패 시, DLQ 토픽으로 원본 메시지를 전송
             print(f"❌ 처리 실패 (JSON 파싱 불가): {e}")
             print(f"-> DLQ 토픽 '{dlq_topic}'으로 메시지를 전송합니다.")
-            producer.send(dlq_topic, value=message.value)
+            producer.send(dlq_topic, value=message.value) # 주석해제
         
         # 5. 성공하든 실패하든, 처리가 끝났으므로 오프셋을 수동으로 커밋
         # 이렇게 해야 다음 메시지로 넘어갈 수 있습니다.
@@ -58,4 +59,4 @@ except KeyboardInterrupt:
 finally:
     # 6. 종료 시 컨슈머와 프로듀서를 모두 안전하게 닫습니다.
     consumer.close()
-    producer.close()
+    producer.close() # 주석해제
